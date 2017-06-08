@@ -13,10 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by da_20 on 31/5/2017.
@@ -63,11 +60,49 @@ public class BandController {
 
     @RequestMapping(value = "/band", method = RequestMethod.POST)
     public Band saveBand(@Valid Band band, BindingResult bindingResult, Model model) {
-        band.setFecha_registro(new Date());
+        //band.setFecha_registro(new Date());
         caloriesHistoryService.saveCaloriesHistory(new CaloriesHistory(band.getCalories(), band.getUser(), band.getFecha_registro()));
         pulseHistoryService.savePulseHistory(new PulseHistory(band.getBpm(), band.getFecha_registro(), band.getUser()));
         stepsHistoryService.saveStepsHistory(new StepsHistory(band.getSteps(), band.getDistance(), band.getUser(), band.getFecha_registro()));
-        locationHistoryService.saveLocationHistory(new LocationHistory(band.getLatitude(), band.getLongitude(), band.getUser(), band.getFecha_registro()));
+
+
+
+
+        User user = userService.getUserById(band.getUser());
+
+        LocationHistory guardar = new LocationHistory(band.getLatitude(), band.getLongitude(), band.getUser(), band.getFecha_registro());
+        boolean puedoGuardar = true;
+        Iterator<LocationHistory> iterator = locationHistoryService.listAllLocationHistory().iterator();
+        ArrayList<LocationHistory> listaUsuario = new ArrayList<>();
+        while(iterator.hasNext()){
+            LocationHistory aux = iterator.next();
+            if(aux.getUser().equals(user.getId())) {
+                listaUsuario.add(aux);
+            }
+        }
+        listaUsuario.add(guardar);
+        Collections.sort(listaUsuario,(l1,l2) -> l1.getDate().compareTo(l2.getDate()));
+
+        // x -> longitud
+        // y -> latitud
+
+        float resp = 0;
+        for(int index = 0;index < listaUsuario.size() - 1; index++) {
+            float valorActual = (float)Math.sqrt(Math.pow(listaUsuario.get(index).getLongitude() - listaUsuario.get(index+1).getLongitude(),2)
+                    + Math.pow(listaUsuario.get(index).getLatitude() - listaUsuario.get(index+1).getLongitude(),2));
+
+            if(valorActual > 1000) {
+                puedoGuardar = false;
+            }
+        }
+
+        if(puedoGuardar) {
+            locationHistoryService.saveLocationHistory(guardar);
+        }
+        else {
+            System.out.println("No se guardo una locacion");
+        }
+
         bandService.saveBand(band);
 
         return band;

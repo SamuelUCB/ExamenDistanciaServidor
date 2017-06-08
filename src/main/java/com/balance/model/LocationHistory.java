@@ -7,7 +7,7 @@ import java.util.Date;
  * Created by da_20 on 5/6/2017.
  */
 @Entity
-public class LocationHistory {
+public class LocationHistory{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="location_history_id")

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <title>Calories History</title>
+    <link href="/css/bootstrap.css" th:href="@{/css/bootstrap.css}" rel="stylesheet" media="screen"/>
+</head>
+<body>
+    <label>La distancia total es: </label>
+    <label th:text="${distanciaTotal}"/>
+
+    <br/><br/>
+
+    <label th:each="dialogo : ${dialogos}" th:text="${dialogo}"></label>
+</body>
+</html>

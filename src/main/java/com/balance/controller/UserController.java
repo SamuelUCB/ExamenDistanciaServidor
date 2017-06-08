@@ -3,6 +3,7 @@ package com.balance.controller;
 import com.balance.model.*;
 import com.balance.repository.TerminalRepository;
 import com.balance.service.*;
+import com.sun.prism.PhongMaterial;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 @Controller
@@ -317,5 +320,40 @@ public class UserController {
         }
 
         return "limited/mapLastLocation";
+    }
+
+    @RequestMapping(value = "/user/distance", method = RequestMethod.GET)
+    public String getDistance(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByEmail(auth.getName());
+        Iterator<LocationHistory> iterator = locationHistoryService.listAllLocationHistory().iterator();
+        ArrayList<LocationHistory> listaUsuario = new ArrayList<>();
+        while(iterator.hasNext()){
+            LocationHistory aux = iterator.next();
+            if(aux.getUser().equals(user.getId())) {
+                listaUsuario.add(aux);
+            }
+        }
+
+        Collections.sort(listaUsuario,(l1,l2) -> l1.getDate().compareTo(l2.getDate()));
+
+        // x -> longitud
+        // y -> latitud
+
+        float resp = 0;
+        ArrayList<String> dialogos = new ArrayList<>();
+        for(int index = 0;index < listaUsuario.size() - 1; index++) {
+            float valorActual = (float)Math.sqrt(Math.pow(listaUsuario.get(index).getLongitude() - listaUsuario.get(index+1).getLongitude(),2)
+                    + Math.pow(listaUsuario.get(index).getLatitude() - listaUsuario.get(index+1).getLongitude(),2));
+            dialogos.add("Distancia entre (" + listaUsuario.get(index).getLongitude() + "," + listaUsuario.get(index).getLatitude() +
+                ") y (" + listaUsuario.get(index+1).getLongitude() + "," + listaUsuario.get(index+1).getLatitude() + ")    |   Fecha Entre: " +
+                    listaUsuario.get(index).getDate() + " y " + listaUsuario.get(index+1).getDate() + "      = " + valorActual
+            );
+            resp += valorActual;
+        }
+
+        model.addAttribute("distanciaTotal", resp);
+        model.addAttribute("dialogos",dialogos);
+        return "limited/distance";
     }
 }
